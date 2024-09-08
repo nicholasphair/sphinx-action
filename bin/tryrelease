@@ -27,13 +27,12 @@ fi
 while IFS= read -r tag; do
     sed -i "1s#.*#FROM sphinxdoc/sphinx:${tag}#g" "$DOCKERFILE"
 
-    git checkout -b "release/${tag}"  # Create a new branch for each tag
     git add "$DOCKERFILE"
     git commit --message "build(release): release version ${tag}"
     git tag "$tag"
 
-    git push origin "release/${tag}"  # Push the new branch
-    git push origin "$tag"  # Push the tag
+    # Push the commit to the remote tag reference without updating a branch
+    git push origin HEAD:refs/tags/"$tag"
 done < "$NEW_TAGS"
 
 rm "$NEW_TAGS"
