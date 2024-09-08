@@ -3,17 +3,16 @@
 DOCKERFILE="Dockerfile"
 : ${RUNNER_TEMP:=/tmp}
 
-
 fetch_current_tags() {
   gh api repos/:owner/:repo/git/refs/tags \
-    --jq '.[]' -q '.[] | .ref' | 
+    --jq '.[]' -q '.[] | .ref' |
     cut -d'/' -f3 |
     sort
 }
 
 fetch_sphinx_image_tags() {
   gh api repos/sphinx-doc/sphinx-docker-images/git/refs/tags \
-    --jq '.[]' -q '.[] | .ref' | 
+    --jq '.[]' -q '.[] | .ref' |
     cut -d'/' -f3 |
     sort
 }
@@ -28,10 +27,13 @@ fi
 while IFS= read -r tag; do
     sed -i "1s#.*#FROM sphinxdoc/sphinx:${tag}#g" "$DOCKERFILE"
 
+    git checkout -b "release/${tag}"  # Create a new branch for each tag
     git add "$DOCKERFILE"
     git commit --message "build(release): release version ${tag}"
-    git tag "$tag" 
-    git push --tags
+    git tag "$tag"
+
+    git push origin "release/${tag}"  # Push the new branch
+    git push origin "$tag"  # Push the tag
 done < "$NEW_TAGS"
 
 rm "$NEW_TAGS"
